@@ -1,89 +1,153 @@
-using UnityEditor.ShaderKeywordFilter;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Grid : MonoBehaviour
 {
     // Grid properties.
-    public int[,] cells;
-    int[,] newGrid;
+    bool[,] cells;
+    bool[,] newGrid;
+    Vector3 gridOffset;
+
+    // Cell objects.
     public GameObject liveCell;
     public GameObject deadCell;
-    Vector3 gridOffset;
+    List<GameObject> objects = new List<GameObject>();
+    
 
     private void Start()
     {
-        gridOffset = new Vector3(-8, -5, 0);
-        cells = InitializeGrid(10, 15);
+        // Offset to center grid on the screen.
+        gridOffset = new Vector3(-36, -24, 0);
+
+        cells = InitializeGrid(50, 75);
         DrawGrid(cells);
+        InvokeRepeating("Tick", 0.05f, 0.05f);
     }
 
-    private int[,] InitializeGrid(int height, int width)
+    private bool[,] InitializeGrid(int height, int width)
     {
-        cells = new int[height, width];
+        // Initialize grid with random cells.
+        cells = new bool[height, width];
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                cells[y, x] = Random.Range(0, 2);
+                cells[y, x] = Random.value > 0.5f;
             }
         }
         return cells;
     }
 
-    private void DrawGrid(int[,] grid)
+    private void Tick()
+    {
+        // Instantiate new grid to store next generation.
+        newGrid = new bool[cells.GetLength(0), cells.GetLength(1)];
+
+        // Check neighbours and apply rules to each cell.
+        for (int y = 0; y < cells.GetLength(0); y++)
+            {
+            for (int x = 0; x < cells.GetLength(1); x++)
+            {
+                int neighbours = CheckNeighbours(x, y);
+                ApplyRules(x, y, neighbours);
+            }
+        }
+
+        // Update cells to next generation.
+        cells = newGrid;
+        ClearCells();
+        DrawGrid(cells);
+    }
+
+    private void ClearCells()
+    {
+        // Clears cells before next iteration to avoid duplicates.
+        foreach (GameObject obj in objects)
+        {
+            Destroy(obj);
+        }
+        objects.Clear();
+    }
+    private void DrawGrid(bool[,] grid)
     {
         for (int y = 0; y < grid.GetLength(0); y++)
         {
             for (int x = 0; x < grid.GetLength(1); x++)
             {
-                GameObject cell;
-                if (grid[y, x] == 1)
+                // Reset the cell before drawing.
+                GameObject cell = null;
+
+                // Check if cell is alive or dead based on grid state.
+                if (grid[y, x] == true)
                 {
-                    // Cell is alive.
                     cell = Instantiate(liveCell);
                 }
                 else
                 {
                     cell = Instantiate(deadCell);
                 }
+                objects.Add(cell);
                 cell.transform.position = new Vector3Int(x, y) + gridOffset;
-                int neighbourCount = CheckNeighbours(y, x);
             }
         }
     }
 
-    private int CheckNeighbours(int gridY, int gridX)
+    private int CheckNeighbours(int gridX, int gridY)
     {
-        newGrid = new int[gridY, gridX];
         int neighbourCount = 0;
         for (int y = -1; y <= 1; y++)
         {
             for (int x = -1; x <= 1; x++)
             {
-                if (y == 0 && x == 0) continue; // skip self.
+                if (y == 0 && x == 0) continue; // skip the cell itself.
 
-                int neighbourX = gridX + x;
-                int neighbourY = gridY + y;
+                // Calculate neighbour positions based on grid.
+                int neighbourX = x + gridX;
+                int neighbourY = y + gridY;
 
-                // Check surrounding neighbours.
-                if (newGrid[neighbourX, neighbourY] == 1)
+                // Check if neihbour is within bounds.
+                if (neighbourX < 0 || neighbourY < 0 || neighbourX >= cells.GetLength(1) || neighbourY >= cells.GetLength(0)) continue;
+
+                bool isAlive = cells[neighbourY, neighbourX];
+
+                if (isAlive)
                 {
                     neighbourCount++;
+                }
+                else
+                {
+                    // Cell is dead.
+                    // Do nothing for dead cells.
                 }
             }
         }
         return neighbourCount;
     }
 
-    private void ApplyRules(int[,] grid, int neighbourCount)
+    private void ApplyRules(int x, int y, int neighbours)
     {
-        for (int y = 0; y < grid.GetLength(1); y++)
+        // Check if cell is alive or dead before applying rules.
+        if (cells[y, x] == true)
         {
-            for (int x = 0; x < grid.GetLength(0); x++)
+            // If less than 2 or more than 3 neighbours, cell dies.
+            if (neighbours < 2 || neighbours > 3)
             {
-
+                newGrid[y, x] = false;
+            }
+            // Any live cell with two or three live neighbours lives on to next generation.
+            else if (neighbours == 2 || neighbours == 3)
+            {
+                newGrid[y, x] = true;
             }
         }
-        if (neighbourCount == 2 || neighbourCount == 3)
-    }
+        else
+        {
+            // If exactly 3 neighbours, cell becomes alive as if by reproduction.
+            if (neighbours == 3)
+            {
+                newGrid[y, x] = true;
+            }
+            //else newGrid[y, x] = false; 
+        }
+    }  
 }
