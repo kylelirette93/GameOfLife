@@ -116,8 +116,7 @@ public class Grid : MonoBehaviour
                 }
                 else
                 {
-                    // Cell is dead.
-                    // Do nothing for dead cells.
+                    // Do nothing.
                 }
             }
         }
@@ -129,7 +128,7 @@ public class Grid : MonoBehaviour
         // Check if cell is alive or dead before applying rules.
         if (cells[y, x] == true)
         {
-            // If less than 2 or more than 3 neighbours, cell dies.
+            // If less than 2 or more than 3 neighbours, cell dies as if by under population.
             if (neighbours < 2 || neighbours > 3)
             {
                 newGrid[y, x] = false;
