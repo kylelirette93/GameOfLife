@@ -288,12 +288,18 @@ MonoBehaviour:
   liveCell: {fileID: 159041119291455110, guid: 781c695500d4b784f8a8c7e966a0ade4, type: 3}
   deadCell: {fileID: 6645837278889838276, guid: 4c74a9861d3553d43b6d57bfa51b776b, type: 3}
   zombieCell: {fileID: 159041119291455110, guid: 1209a96e6dbfba242885c93281345ca6, type: 3}
-  maxTicks: 1000
+  maxTicks: 500
   gridHeight: 50
   gridWidth: 50
   gridOffsetX: -24
   gridOffsetY: -24
-  zombieCount: 20
+  zombieCount: 50
+  zombieChance: 0.1
+  tickTime: 0.5
+  repeatRate: 0.5
+  humanSurvivalChance: 0.5
+  depressionChance: 0.069
+  suicideRate: 0.13
 --- !u!4 &585444409
 Transform:
   m_ObjectHideFlags: 0

@@ -15,7 +15,7 @@ public class Grid : MonoBehaviour
     [SerializeField] GameObject deadCell;
     [SerializeField] GameObject zombieCell;
     List<GameObject> objects = new List<GameObject>();
-    int timeElapsed = 0;
+    float timeElapsed = 0;
     bool canCount = true;
     [SerializeField] int maxTicks = 1000;
     [SerializeField] int gridHeight = 50;
@@ -23,6 +23,13 @@ public class Grid : MonoBehaviour
     [SerializeField] int gridOffsetX = -36;
     [SerializeField] int gridOffsetY = -24;
     [SerializeField] int zombieCount = 5;
+    [SerializeField] float zombieChance = 0.1f;
+    [SerializeField] float tickTime = 0.3f;
+    [SerializeField] float repeatRate = 0.3f;
+    [SerializeField] float humanSurvivalChance = 0.5f;
+    [SerializeField] float depressionChance = 0.069f;
+    [SerializeField] float suicideRate = 0.013f;
+
 
 
     private void Start()
@@ -35,7 +42,7 @@ public class Grid : MonoBehaviour
         // Spawn a few zombies initially.
         SpawnZombies(zombieCount);
         DrawGrid(cells);
-        InvokeRepeating("Tick", 0.1f, 0.1f);
+        InvokeRepeating("Tick", tickTime, repeatRate);
     }
 
     private void SpawnZombies(int count)
@@ -57,7 +64,7 @@ public class Grid : MonoBehaviour
         ClearCells();
         SpawnZombies(zombieCount);
         DrawGrid(cells);
-        InvokeRepeating("Tick", 0.1f, 0.1f);
+        InvokeRepeating("Tick", tickTime, repeatRate);
     }
 
     private bool[,] InitializeGrid(int height, int width)
@@ -115,9 +122,9 @@ public class Grid : MonoBehaviour
     {
         if (canCount)
         {
-            timeElapsed += 1;
+            timeElapsed += 0.05f;
         }
-        if (timeElapsed >= maxTicks)
+        if (timeElapsed >= maxTicks * 60)
         {
             CancelInvoke("Tick");
             canCount = false;
@@ -206,6 +213,16 @@ public class Grid : MonoBehaviour
             {
                 newGrid[y, x] = true;
             }
+            else if (neighbours == 0)
+            {
+                if (Random.value <= depressionChance)
+                {
+                    if (Random.value <= suicideRate)
+                    {
+                        newGrid[y, x] = false;
+                    }
+                }
+            }
         }
         else
         {
@@ -247,7 +264,15 @@ public class Grid : MonoBehaviour
         }
         else
         {
-            zombies[y, x] = true;
+            // Human's have a 50% chance to survive by killing a zombie.
+            if (Random.value < 0.5f)
+            {
+                zombies[y, x] = true;
+            }
+            else
+            {
+                zombies[y, x] = false;
+            }
         }
     }
 }
